@@ -2,6 +2,7 @@ package com.android.guoheng.decodeencodemp4;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
+import android.media.projection.MediaProjection;
 import android.util.Log;
 
 import java.io.IOException;
@@ -13,38 +14,46 @@ import java.nio.ByteBuffer;
 public class EncodeDecodeSurface {
 
     private static final String TAG = "EncodeDecodeSurface";
-    private static final boolean VERBOSE = false;           // lots of logging
+    private static final boolean VERBOSE = true;           // lots of logging
 
     private static final int MAX_FRAMES = 400;       // stop extracting after this many
 
-    SurfaceDecoder SDecoder=new SurfaceDecoder();
-    SurfaceEncoder SEncoder=new SurfaceEncoder();
+    SurfaceDecoder SDecoder = new SurfaceDecoder();
+    SurfaceEncoder SEncoder = new SurfaceEncoder();
 
-    /** test entry point */
-    public void testEncodeDecodeSurface() throws Throwable {
-        EncodeDecodeSurfaceWrapper.runTest(this);
-    }
+//    /**
+//     * test entry point
+//     */
+//    public void testEncodeDecodeSurface(MediaProjection mediaProjection) throws Throwable {
+//        EncodeDecodeSurfaceWrapper.runTest(this, mediaProjection);
+//    }
 
-    private static class EncodeDecodeSurfaceWrapper implements Runnable {
+    public static class EncodeDecodeSurfaceWrapper implements Runnable {
         private Throwable mThrowable;
         private EncodeDecodeSurface mTest;
+        private MediaProjection projection;
 
-        private EncodeDecodeSurfaceWrapper(EncodeDecodeSurface test) {
+
+        private EncodeDecodeSurfaceWrapper(EncodeDecodeSurface test, MediaProjection projection) {
             mTest = test;
+            this.projection = projection;
+
         }
 
         @Override
         public void run() {
             try {
-                mTest.Prepare();
+                mTest.Prepare(projection);
             } catch (Throwable th) {
                 mThrowable = th;
             }
         }
 
-        /** Entry point. */
-        public static void runTest(EncodeDecodeSurface obj) throws Throwable {
-            EncodeDecodeSurfaceWrapper wrapper = new EncodeDecodeSurfaceWrapper(obj);
+        /**
+         * Entry point.
+         */
+        public static void runTest(EncodeDecodeSurface obj, MediaProjection mediaProjection) throws Throwable {
+            EncodeDecodeSurfaceWrapper wrapper = new EncodeDecodeSurfaceWrapper(obj, mediaProjection);
             Thread th = new Thread(wrapper, "codec test");
             th.start();
             //th.join();
@@ -54,12 +63,21 @@ public class EncodeDecodeSurface {
         }
     }
 
-    private void Prepare() throws IOException {
+    private void Prepare(MediaProjection projection) throws IOException {
         try {
 
             SEncoder.VideoEncodePrepare();
-            SDecoder.SurfaceDecoderPrePare(SEncoder.getEncoderSurface());
-            doExtract();
+            SDecoder.SurfaceDecoderPrePare(projection, SEncoder.getEncoderSurface());
+//            doExtract();
+            while (true) {
+                SDecoder.outputSurface.makeCurrent(1);
+                SDecoder.outputSurface.awaitNewImage();
+                SDecoder.outputSurface.drawImage(true);
+
+                SEncoder.drainEncoder(false);
+//            SDecoder.outputSurface.setPresentationTime(computePresentationTimeNsec(decodeCount));
+                SDecoder.outputSurface.swapBuffers();
+            }
         } finally {
             SDecoder.release();
             SEncoder.release();
@@ -91,10 +109,10 @@ public class EncodeDecodeSurface {
                         inputDone = true;
                         if (VERBOSE) Log.d(TAG, "sent input EOS");
                     } else {
-                        if (SDecoder.extractor.getSampleTrackIndex() != SDecoder.DecodetrackIndex) {
-                            Log.w(TAG, "WEIRD: got sample from track " +
-                                    SDecoder.extractor.getSampleTrackIndex() + ", expected " + SDecoder.DecodetrackIndex);
-                        }
+//                        if (SDecoder.extractor.getSampleTrackIndex() != SDecoder.DecodetrackIndex) {
+//                            Log.w(TAG, "WEIRD: got sample from track " +
+//                                    SDecoder.extractor.getSampleTrackIndex() + ", expected " + SDecoder.DecodetrackIndex);
+//                        }
                         long presentationTimeUs = SDecoder.extractor.getSampleTime();
                         SDecoder.decoder.queueInputBuffer(inputBufIndex, 0, chunkSize,
                                 presentationTimeUs, 0 /*flags*/);

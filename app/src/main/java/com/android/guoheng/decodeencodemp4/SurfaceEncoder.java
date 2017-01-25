@@ -22,7 +22,7 @@ public class SurfaceEncoder {
     private static final String MIME_TYPE = "video/avc";    // H.264 Advanced Video Coding
     private static final int WIDTH = 1920;
     private static final int HEIGHT = 1080;
-    private static final int BIT_RATE = 1920*1080*10;            // 2Mbps
+    private static final int BIT_RATE = 1920 * 1080 * 10;            // 2Mbps
     public static final int FRAME_RATE = 30;               // 30fps
     private static final int IFRAME_INTERVAL = 30;          // 10 seconds between I-frames
 
@@ -35,8 +35,7 @@ public class SurfaceEncoder {
     public boolean mMuxerStarted;
 
 
-    public void VideoEncodePrepare()
-    {
+    public void VideoEncodePrepare() {
         String outputPath = new File(Environment.getExternalStorageDirectory(),
                 "mytest." + WIDTH + "x" + HEIGHT + ".mp4").toString();
 
@@ -52,26 +51,23 @@ public class SurfaceEncoder {
         format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);
         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);
 
-
         encoder = null;
 
         try {
             encoder = MediaCodec.createEncoderByType(MIME_TYPE);
 
             encoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
-            encodesurface=encoder.createInputSurface();
+            encodesurface = encoder.createInputSurface();
             encoder.start();
             mMuxer = new MediaMuxer(outputPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
 
-        }catch (IOException ioe) {
+        } catch (IOException ioe) {
             throw new RuntimeException("failed init encoder", ioe);
         }
 
         mTrackIndex = -1;
         mMuxerStarted = false;
-
     }
-
 
 
     public void drainEncoder(boolean endOfStream) {
@@ -159,10 +155,8 @@ public class SurfaceEncoder {
     }
 
 
-    void release()
-    {
-        if (encoder!=null)
-        {
+    void release() {
+        if (encoder != null) {
             encoder.stop();
             encoder.release();
         }
@@ -174,10 +168,7 @@ public class SurfaceEncoder {
     }
 
 
-
-
-    Surface getEncoderSurface()
-    {
+    Surface getEncoderSurface() {
         return encodesurface;
     }
 

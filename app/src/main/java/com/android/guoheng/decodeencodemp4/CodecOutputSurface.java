@@ -20,7 +20,7 @@ public class CodecOutputSurface
         implements SurfaceTexture.OnFrameAvailableListener {
 
     private static final String TAG = "EncodeDecodeSurface";
-    private static final boolean VERBOSE = false;           // lots of logging
+    private static final boolean VERBOSE = true;           // lots of logging
 
     private STextureRender mTextureRender;
     private SurfaceTexture mSurfaceTexture;
@@ -45,7 +45,7 @@ public class CodecOutputSurface
      * new EGL context and surface will be made current.  Creates a Surface that can be passed
      * to MediaCodec.configure().
      */
-    public CodecOutputSurface(int width, int height,Surface surface) {
+    public CodecOutputSurface(int width, int height, Surface surface) {
         if (width <= 0 || height <= 0) {
             throw new IllegalArgumentException();
         }
@@ -81,7 +81,7 @@ public class CodecOutputSurface
     private void eglSetup(Surface surface) {
         mEGLDisplay = EGL14.eglGetDisplay(EGL14.EGL_DEFAULT_DISPLAY);
         if (mEGLDisplay == EGL14.EGL_NO_DISPLAY) {
-            throw new RuntimeException("unable to get EGL14 display");
+            throw new RuntimeException("mTextureRenderunable to get EGL14 display");
         }
         int[] version = new int[2];
         if (!EGL14.eglInitialize(mEGLDisplay, version, 0, version, 1)) {
@@ -135,12 +135,10 @@ public class CodecOutputSurface
         };
         mEGLSurface = EGL14.eglCreatePbufferSurface(mEGLDisplay, configs[0], surfaceAttribs, 0);
 
-
         checkEglError("eglCreatePbufferSurface");
         if (mEGLSurface == null) {
             throw new RuntimeException("surface was null");
         }
-
 
         int[] surfaceAttribs2 = {
                 EGL14.EGL_NONE
@@ -151,8 +149,7 @@ public class CodecOutputSurface
         if (mEGLSurfaceEncoder == null) {
             throw new RuntimeException("surface was null");
         }
-        EncodeSurface=surface;
-
+        EncodeSurface = surface;
     }
 
     /**
@@ -173,7 +170,7 @@ public class CodecOutputSurface
 
         mTextureRender = null;
         mSurface = null;
-        EncodeSurface=null;
+        EncodeSurface = null;
         mSurfaceTexture = null;
     }
 
@@ -231,13 +228,11 @@ public class CodecOutputSurface
 
     public void makeCurrent(int index) {
 
-        if (index==0)
-        {
+        if (index == 0) {
             if (!EGL14.eglMakeCurrent(mEGLDisplay, mEGLSurface, mEGLSurface, mEGLContext)) {
                 throw new RuntimeException("eglMakeCurrent failed");
             }
-        }else
-        {
+        } else {
             if (!EGL14.eglMakeCurrent(mEGLDisplay, mEGLSurfaceEncoder, mEGLSurfaceEncoder, mEGLContextEncoder)) {
                 throw new RuntimeException("eglMakeCurrent failed");
             }
